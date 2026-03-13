@@ -1,0 +1,746 @@
+/* Root variables for theming and tokens */
+:root {
+  /* ── Color Palette ── */
+  --black: #050a15;
+  --white: #edf0f5;
+  --gray-1: #94a3b8;
+  --gray-2: #475569;
+  --orange: #f45c00;
+  --orange-dim: rgba(244, 92, 0, 0.15);
+  --text-muted: rgba(237, 240, 245, 0.45);
+
+  /* ── Typography ── */
+  --serif: 'Syne', sans-serif;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+
+  /* ── UI Tokens ── */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --nav-height: 72px;
+}
+
+/* ══════════════════════════════════
+   RESET & BASE
+══════════════════════════════════ */
+/* Select all elements to reset margin, padding, and box-sizing */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Enable smooth scrolling for all anchor links */
+html { scroll-behavior: smooth; }
+
+/* Set base typography, background color, and prevent horizontal scroll */
+body {
+  font-family: var(--sans);
+  background: var(--black);
+  background-image: linear-gradient(160deg, #050a15 0%, #0a1628 100%);
+  color: var(--white);
+  line-height: 1.75;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Subtle CSS Grid Background Overlay ── */
+/* Add fixed, repeating 1px light grid lines behind the content */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; opacity: 0.03;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,1) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+/* ── Film Grain Noise Overlay ── */
+/* Add an SVG-based turbulence filter overlay to simulate film grain */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 10001;
+  pointer-events: none; opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  will-change: transform;
+}
+
+/* ── Custom Cursor ── */
+/* Hide the default OS pointer when a fine pointer is detected */
+@media (pointer: fine) {
+  /* Hide native cursor aggressively */
+  *, *::before, *::after { cursor: none !important; }
+
+  /* Style the inner orange cursor dot */
+  .cursor-dot {
+    position: fixed; top: 0; left: 0;
+    width: 6px; height: 6px;
+    background: var(--orange); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Style the outer ring that follows the dot with lerp */
+  .cursor-ring {
+    position: fixed; top: 0; left: 0;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(244, 92, 0, 0.5); border-radius: 50%;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Make the inner dot disappear when hovering over clickable elements */
+  .cursor-dot.hovering { background: transparent; }
+
+  /* Enlarge and fill the outer ring slightly upon hovering */
+  .cursor-ring.hovering {
+    background: rgba(244, 92, 0, 0.05);
+    border-color: rgba(244, 92, 0, 0.8);
+  }
+}
+
+/* ── Hero Canvas ── */
+/* Expand the Threat Network Graph canvas to fill its container */
+#heroCanvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+
+/* Ensure hero text content stays layered safely above the canvas */
+.hero .wrap { position: relative; z-index: 1; }
+
+/* ══════════════════════════════════
+   TYPOGRAPHY & UTILITIES
+══════════════════════════════════ */
+/* Apply custom display serif font to all headings */
+h1, h2, h3, h4 { font-family: var(--serif); font-weight: 200; }
+
+/* Style regular paragraph text with muted colors */
+p { color: var(--gray-1); margin-bottom: 24px; font-weight: 400; }
+
+/* Utility class for technical monospace fonts */
+.mono { font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Limit the max width of the primary content wrapper */
+.wrap { position: relative; z-index: 1; width: 92%; max-width: 1200px; margin: 0 auto; }
+
+/* Remove default link underline and colors */
+a { color: inherit; text-decoration: none; }
+
+/* Remove bullets from all lists */
+ul { list-style: none; }
+
+/* Initial hidden state for scroll reveal animation */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); }
+
+/* Final visible state triggered by Intersection Observer */
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* Delay modifiers for staggered reveals */
+.r1 { transition-delay: 0.1s; }
+.r2 { transition-delay: 0.2s; }
+.r3 { transition-delay: 0.3s; }
+.r4 { transition-delay: 0.4s; }
+
+/* ══════════════════════════════════
+   NAVIGATION
+══════════════════════════════════ */
+/* Pin the top navigation bar over all content */
+.nav {
+  position: fixed; top: 0; left: 0; width: 100%;
+  height: var(--nav-height); z-index: 100;
+  display: flex; align-items: center;
+  transition: background 0.4s, border-bottom 0.4s;
+  border-bottom: 1px solid transparent;
+}
+
+/* Apply a sleek glassmorphic blur when scrolling down */
+.nav.scrolled {
+  background: rgba(5, 10, 21, 0.85);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Ensure proper spacing between logo and links in the nav */
+.nav .wrap { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+
+/* Style the logo brand text */
+.nav-logo {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--serif); font-weight: 600; font-size: 1.25rem; letter-spacing: -0.02em;
+}
+
+/* Size the SVG logo icon */
+.logo-icon { width: 28px; height: 28px; }
+
+/* Space out the navigation text links horizontally */
+.nav-links { display: flex; align-items: center; gap: 40px; }
+
+/* Style navigation anchor texts with a subtle grey color */
+.nav-links a { font-size: 0.85rem; font-weight: 500; color: var(--gray-1); transition: color 0.3s; }
+
+/* Highlight navigation links on hover */
+.nav-links a:hover { color: var(--white); }
+
+/* Distinct styling for the Register Interest call-to-action button */
+.nav-cta {
+  background: rgba(244, 92, 0, 0.1); color: var(--orange) !important;
+  padding: 8px 16px; border-radius: 2px;
+  border: 1px solid rgba(244, 92, 0, 0.2); transition: all 0.3s !important;
+}
+
+/* Inverse the button colors securely on hover */
+.nav-cta:hover { background: var(--orange); color: var(--white) !important; }
+
+/* Hide the mobile hamburger button on desktop screens */
+.hamburger {
+  display: none; flex-direction: column; justify-content: space-between;
+  width: 24px; height: 16px; background: none; border: none; z-index: 101;
+}
+
+/* Style the horizontal individual menu bars inside the hamburger */
+.hamburger span { width: 100%; height: 1px; background: var(--white); transition: 0.3s; }
+
+/* Rotate the top bar to simulate an 'X' icon */
+.hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+
+/* Hide the middle bar in active state */
+.hamburger.active span:nth-child(2) { opacity: 0; }
+
+/* Rotate the bottom bar to intersect the top bar */
+.hamburger.active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+/* ══════════════════════════════════
+   HERO — untouched
+══════════════════════════════════ */
+/* Create a full viewport height container for first impressions */
+.hero {
+  position: relative; min-height: 100dvh;
+  display: flex; align-items: center;
+  padding: 120px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Form an asymmetric grid splitting the hero text and background graphic */
+.hero .wrap { display: grid; grid-template-columns: 60% 40%; align-items: center; }
+
+/* Contain hero text elements strictly to the left edge */
+.hero-content { position: relative; z-index: 1; max-width: 800px; margin-right: 15%; }
+
+/* Style the technical top label badge grouping */
+.hero-label {
+  display: inline-flex; align-items: center; gap: 12px;
+  font-size: 0.72rem; color: var(--gray-1);
+  margin-bottom: 32px; padding: 6px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;
+}
+
+/* Give the separator inside labels the primary brand orange */
+.hero-label .sep { color: var(--orange); }
+
+/* Make the main tagline massive and responsive */
+.hero h1 { font-size: clamp(3rem, 6vw, 5rem); line-height: 1.05; letter-spacing: -0.04em; margin-bottom: 32px; }
+
+/* Apply italics specifically to the orange emphasis text */
+.hero h1 em { color: var(--orange); font-style: italic; font-weight: 400; }
+
+/* Constrain the subheading text to a comfortable, tight eye reading length */
+.hero-sub { font-size: 0.98rem; color: rgba(237,240,245,0.6); max-width: 440px; margin-bottom: 48px; }
+
+/* Group the big hero layout action buttons side-by-side */
+.hero-actions { display: flex; gap: 16px; margin-bottom: 64px; }
+
+/* Normalize all core button layouts globally */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 14px 32px; font-size: 0.82rem; font-weight: 500;
+  border-radius: 3px; transition: all 0.3s var(--ease); letter-spacing: 0.04em;
+}
+
+/* Solid orange styling for primary CTAs */
+.btn-primary { background: var(--orange); color: var(--white); border: 1px solid transparent; }
+
+/* Expand hover shadow effects to make primary button tactile */
+.btn-primary:hover { background: #d85100; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(244,92,0,0.2); }
+
+/* Transparent wireframe border for secondary choices */
+.btn-ghost { background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,0.15); }
+
+/* Brighten the border and add internal background for ghost hovers */
+.btn-ghost:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.3); }
+
+/* Let risk tags wrap neatly beneath the actions */
+.hero-tags { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* Frame each individual tag with a subtle box */
+.hero-tags span { font-size: 0.65rem; color: var(--white); padding: 4px 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.15); border-radius: 2px; }
+
+/* Anchor the pulsing hint prompt perfectly near the viewport bottom */
+.scroll-hint { position: absolute; bottom: 40px; left: 4%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* Size the hint label down tightly */
+.scroll-hint span { font-size: 0.6rem; color: var(--gray-2); }
+
+/* Build the gradient falling visual line indicating "scroll down" */
+.scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent); }
+
+/* ══════════════════════════════════
+   SECTION SHARED
+══════════════════════════════════ */
+/* Create spacing between the main section title header and its upcoming content */
+.section-head { margin-bottom: 64px; }
+
+/* Build muted prefix tracking labels above headings like "IDR_002 / About" */
+.section-tag { display: inline-block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 16px; }
+
+/* Set uniform massive typography sizing sizes for all major section headers */
+.section-head h2 { font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -0.03em; }
+
+/* ══════════════════════════════════
+   ABOUT
+   Aerial city grid — overhead, geometric
+══════════════════════════════════ */
+/* Construct the primary container for the About section block */
+.about {
+  padding: 120px 0;
+  position: relative;
+  isolation: isolate;
+  background-color: var(--black);
+  background-image: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1800&q=80&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center top;
+}
+
+/* Layer a dark dimming gradient mask above the About image */
+.about::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(to bottom,
+    rgba(5,10,21,0.97) 0%,
+    rgba(5,10,21,0.75) 10%,
+    rgba(5,10,21,0.75) 60%,
+    rgba(5,10,21,0.97) 100%);
+}
+
+/* Split description text and core statistics equally down the middle */
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+
+/* Boost visibility on the introductory paragraph */
+.about-text .lead { font-size: 1.25rem; color: var(--white); line-height: 1.6; }
+
+/* Stack stat numbers vertically with generous gaps */
+.about-stats { display: flex; flex-direction: column; justify-content: center; gap: 40px; }
+
+/* Add bottom dividing lines for each stat element independently */
+.stat { position: relative; padding: 24px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+/* Add an upper border exclusive to the first stat item */
+.stat:first-child { border-top: 1px solid rgba(255,255,255,0.05); }
+
+/* Build the orange vertical hash line resting on the left edge */
+.stat-accent { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 2px; height: 32px; background: var(--orange); border-radius: 1px; }
+
+/* Establish the giant size and orange tone on the core metrics */
+.stat-num { font-size: 4rem; font-weight: 500; color: var(--orange); line-height: 1; padding-left: 16px; margin-bottom: 4px; }
+
+/* Lower the visual weight of the descriptions attached to each metric */
+.stat-desc { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); padding-left: 16px; line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ══════════════════════════════════
+   MODEL
+   Server room / data centre
+══════════════════════════════════ */
+/* Create padding spacing rules on the Model layer */
+.model {
+  padding: 120px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+  isolation: isolate;
+  background-color: var(--black);
+  background-image: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1800&q=80&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Paint the overlay mask above the server background */
+.model::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(to bottom,
+    rgba(5,10,21,0.97) 0%,
+    rgba(5,10,21,0.82) 40%,
+    rgba(5,10,21,0.82) 60%,
+    rgba(5,10,21,0.97) 100%);
+}
+
+/* Build the mock-terminal pipeline shell box */
+.pipeline {
+  margin-bottom: 64px; padding: 24px 28px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05); border-radius: 2px;
+  font-family: var(--mono); font-size: 0.82rem; line-height: 2;
+}
+
+/* Force each text line block within the command sequence to not visually break apart */
+.pipe-line { white-space: nowrap; }
+
+/* Emphasize the root '$' user input symbol */
+.pipe-prompt { color: var(--orange); }
+
+/* Color the typed command invocation white */
+.pipe-cmd { color: var(--white); }
+
+/* Soften the argument flags */
+.pipe-flag { color: var(--gray-1); }
+
+/* Mutate the prepended numeric step digits away from main text visibility */
+.pipe-step-n { color: var(--gray-2); }
+
+/* Keep pipeline operation phrases readable and light */
+.pipe-step-name { color: var(--gray-1); font-family: var(--sans); font-weight: 400; }
+
+/* Mark the final "Deploy" step sharply */
+.pipe-step-name.active { color: var(--orange); font-weight: 500; }
+
+/* Space out the rightward arrows linearly */
+.pipe-sep { color: var(--gray-2); margin: 0 4px; }
+
+/* Control the block orange caret */
+.pipe-cursor { color: var(--orange); animation: blink-cursor 1s step-end infinite; }
+
+/* Flicker opacity up and down on a loop simulating terminals */
+@keyframes blink-cursor { 0%,50%{opacity:1;}51%,100%{opacity:0;} }
+
+/* Mute the system status readout */
+.pipe-status { color: var(--gray-2); }
+
+/* Keep the lower feedback log subtle */
+.pipe-output { color: var(--gray-2); font-size: 0.72rem; }
+
+/* Arrange pillars horizontally with standard line gap space collapsing between them */
+.pillars { display: flex; flex-direction: column; gap: 1px; }
+
+/* Render a specialized extra-wide layout specifically for the Academy highlight component */
+.pillar-wide {
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 2px; padding: 36px 32px; transition: background 0.3s;
+  position: relative; margin-bottom: 1px;
+}
+
+/* Draw a collapsing top orange border accent out of sight */
+.pillar-wide::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--orange);
+  transform: scaleX(0); transform-origin: left; transition: transform 0.3s var(--ease);
+}
+
+/* Unfurl the orange line cleanly horizontally upon mouse interaction */
+.pillar-wide:hover::before { transform: scaleX(1); }
+
+/* Slightly lighten the whole wide component box on hover */
+.pillar-wide:hover { background: rgba(255,255,255,0.04); }
+
+/* Setup grid coordinates dictating text placement along the wider asset */
+.pillar-inner { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: start; }
+
+/* Vertically organize and align icons next to tags inside the wide card layout */
+.pillar-icon-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* Group the smaller remaining functional pillars back onto a standard 2 unit grid */
+.pillar-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
+
+/* Ensure regular pillars have clean structure identical to the expanded one */
+.pillar {
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 2px; padding: 48px 40px; transition: background 0.3s; position: relative;
+}
+
+/* Implement the hidden expanding orange line on standard pillar left edges */
+.pillar::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 2px; height: 100%;
+  background: var(--orange); transform: scaleY(0); transform-origin: top;
+  transition: transform 0.3s var(--ease);
+}
+
+/* Pull down the stroke over time securely as cursor enters */
+.pillar:hover::before { transform: scaleY(1); }
+
+/* Shift the element backing subtly upwards simulating focus */
+.pillar:hover { background: rgba(255,255,255,0.04); }
+
+/* Separate icons safely away from their adjacent metadata tagging */
+.pillar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+
+/* Ensure geometric line art iconography rests uniformly sized */
+.pillar-icon { width: 40px; height: 40px; }
+
+/* Set text styling for standard pillar labels */
+.pillar-tag { font-size: 0.65rem; color: var(--gray-2); }
+
+/* Keep title text slightly tracked in and balanced */
+.pillar h3 { font-size: 1.1rem; margin-bottom: 16px; letter-spacing: -0.02em; font-weight: 500; }
+
+/* Normalize pillar body prose description */
+.pillar p { font-size: 0.95rem; margin-bottom: 24px; }
+
+/* Draw an underline segment supporting metadata inside pillar rows */
+.pillar-meta { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 16px; }
+
+/* Group associated related property tags into uniform pill badges */
+.meta-pill { font-family: var(--mono); font-size: 0.65rem; color: var(--gray-1); text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; }
+
+/* Setup clean font specifications for detailed capability text lists */
+.pillar-list { font-size: 0.85rem; color: var(--gray-1); }
+
+/* Horizontally align bullets and list lines */
+.pillar-list li { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+
+/* Provide custom circular orange bullets */
+.pillar-list li::before { content: ''; width: 4px; height: 4px; background: var(--orange); border-radius: 50%; opacity: 0.5; }
+
+/* ══════════════════════════════════
+   COMMUNITY
+   People in modern workspace
+══════════════════════════════════ */
+/* Create boundaries for the broad Audience target container background */
+.community {
+  padding: 120px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+  isolation: isolate;
+  background-color: var(--black);
+  background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1800&q=80&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center 30%;
+}
+
+/* Subdue the stock photo utilizing heavy opacity overlays */
+.community::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(to bottom,
+    rgba(5,10,21,0.97) 0%,
+    rgba(5,10,21,0.82) 40%,
+    rgba(5,10,21,0.82) 60%,
+    rgba(5,10,21,0.97) 100%);
+}
+
+/* Arrange intro and cards next to each other in columns */
+.community-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-bottom: 64px; }
+
+/* Maximize brightness for lead string paragraph inside community container */
+.community-intro .lead { font-size: 1.25rem; color: var(--white); }
+
+/* Vertically stack community target group profiles */
+.community-cards { display: flex; flex-direction: column; gap: 24px; }
+
+/* Render background bounds explicitly to specific target panels */
+.c-card {
+  display: flex; gap: 20px; padding: 24px;
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 2px;
+}
+
+/* Give the letterform avatars an orange boxed border design outline */
+.c-marker {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--orange-dim); color: var(--orange);
+  border: 1px solid rgba(244,92,0,0.3); border-radius: 2px; font-size: 0.8rem;
+}
+
+/* Emphasize the roles heading inline to avatar structures */
+.c-content h3 { font-size: 1.1rem; margin-bottom: 8px; }
+
+/* Avoid unnecessary margins extending role paragraphs */
+.c-content p { font-size: 0.9rem; margin-bottom: 0; }
+
+/* Add upper borders visually sectioning off the industry tag array from core features */
+.sectors { display: flex; align-items: center; gap: 24px; padding-top: 48px; border-top: 1px solid rgba(255,255,255,0.05); }
+
+/* Standardize labels marking tags grouping subsets */
+.sector-label { font-size: 0.72rem; color: rgba(255, 255, 255, 0.85); }
+
+/* Build horizontal row containing pill links wrapped fluidly */
+.sector-pills { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* Set precise margins and padding rules forming individual lozenge badges */
+.sector-pills span { font-size: 0.75rem; color: var(--white); padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; }
+
+/* ══════════════════════════════════
+   CONTACT
+   Abstract glass architecture / building facade
+══════════════════════════════════ */
+/* Create spacing blocks for user interaction lead capture form logic */
+.contact {
+  padding: 120px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+  isolation: isolate;
+  background-color: #02040a;
+  background-image: url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1800&q=80&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Hide bright architectural geometry behind significant dark filtering */
+.contact::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(to bottom,
+    rgba(2,4,10,0.97) 0%,
+    rgba(2,4,10,0.93) 40%,
+    rgba(2,4,10,0.93) 60%,
+    rgba(2,4,10,0.98) 100%);
+}
+
+/* Construct symmetric space distributing contact instructions next to fields */
+.contact-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+
+/* Scale typography massively addressing the concluding title phrase */
+.contact-left h2 { font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 24px; letter-spacing: -0.03em; }
+
+/* Push functional fallback links far downward linearly */
+.contact-links { margin-top: 48px; display: flex; flex-direction: column; gap: 16px; }
+
+/* Display alternative emails correctly stacked over brief label names */
+.contact-link { display: flex; flex-direction: column; gap: 4px; }
+
+/* Render subtle identifier text pointing out fallback communications */
+.contact-link span { font-size: 0.65rem; color: var(--gray-2); }
+
+/* Add visual affordances tracking unstyled web hyperlinks aggressively */
+.contact-link a { font-size: 1.1rem; color: var(--white); text-decoration: underline; text-decoration-color: rgba(255,255,255,0.2); text-underline-offset: 4px; transition: 0.3s; }
+
+/* Elevate hover behavior swapping underline visibility instantly */
+.contact-link a:hover { text-decoration-color: var(--orange); color: var(--orange); }
+
+/* Draw boundaries encompassing user input zones with distinct colors  */
+.contact-form { background: rgba(255,255,255,0.02); padding: 48px; border: 1px solid rgba(255,255,255,0.05); border-radius: 2px; }
+
+/* Array input zones spanning equally horizontally across half sections */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+/* Provide explicit visual buffers spacing inputs strictly linearly outwards */
+.form-group { margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Make explicitly descriptive field labeling tight and capitalized */
+.form-group label { font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-1); }
+
+/* Apply base constraints tracking boundaries effectively into unified input items */
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 14px 16px;
+  background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 2px; color: var(--white); font-family: var(--sans); font-size: 0.95rem; transition: 0.3s;
+}
+
+/* Add active orange bordering illuminating input items being directly selected */
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--orange); background: rgba(244,92,0,0.02); }
+
+/* Force correct color contrast inside native system dropdown displays */
+.form-group option { background-color: var(--black); color: var(--white); }
+
+/* Modify parent buttons executing requests across immediate width availability entirely */
+.btn-full { width: 100%; padding: 18px; font-size: 0.95rem; margin-bottom: 16px; }
+
+/* Establish discrete warning remarks tracking response expectation behaviors linearly */
+.form-note { font-size: 0.65rem; color: var(--text-muted); text-align: center; }
+
+/* ══════════════════════════════════
+   FOOTER
+══════════════════════════════════ */
+/* Create padding spacing separating page bottom effectively cleanly */
+.footer { padding: 64px 0 32px; border-top: 1px solid rgba(255,255,255,0.05); background: #000; }
+
+/* Align all site branding marks correctly horizontal beside top navigation lists */
+.footer-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 48px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 32px; }
+
+/* Set custom identifier logo size directly against standard layout bounds */
+.footer-logo { font-size: 1.5rem; }
+
+/* Render compact identifier description visually */
+.footer-top p { margin: 0; font-size: 0.85rem; color: var(--gray-2); max-width: 300px; }
+
+/* Layout all inline hyperlinks tracking internally consistently next to each other */
+.footer-links { display: flex; gap: 32px; margin-left: auto; }
+
+/* Create specific spacing styles enabling hyperlinks natively */
+.footer-links a { font-size: 0.85rem; color: var(--gray-1); transition: color 0.3s; }
+
+/* Update individual hover characteristics enabling direct click interactions */
+.footer-links a:hover { color: var(--white); }
+
+/* Line up trailing copy rights statements precisely bottom outly facing correctly */
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; }
+
+/* Restrict font features explicitly against internal copy */
+.footer-bottom p { margin: 0; font-size: 0.65rem; color: var(--gray-2); }
+
+/* ══════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════ */
+/* Apply intermediate sizing rules specifically fitting smaller tablets horizontally */
+@media (max-width: 1024px) {
+  /* Prevent horizontal arrangements clipping aggressively */
+  .hero .wrap { display: block; }
+  /* Collapse multiple informational columns inwards onto themselves completely */
+  .about-grid { grid-template-columns: 1fr; gap: 48px; }
+  /* Merge symmetric data elements into linear formats sequentially instead */
+  .pillar-pair { grid-template-columns: 1fr; }
+  /* Remove specific visual assets failing across tighter spatial constraints entirely */
+  .pillar::before, .pillar-wide::before { display: none; }
+  /* Readjust positioning on remaining components uniformly */
+  .pillar-inner { grid-template-columns: 1fr; gap: 20px; }
+  /* Re-stack targeted individuals directly straight down consistently */
+  .community-layout { grid-template-columns: 1fr; gap: 40px; }
+  /* Displace user data input boxes immediately outwards completely */
+  .contact-layout { grid-template-columns: 1fr; gap: 48px; }
+}
+
+/* Trigger explicit constraints scaling specifically rendering on tight mobile viewport constraints natively */
+@media (max-width: 768px) {
+  /* Detach system wide navigations out over screen side linearly rendering */
+  .nav-links {
+    position: fixed; top: 0; right: -100%; width: 75%; max-width: 280px; height: 100vh;
+    background: rgba(5,10,21,0.97);
+    flex-direction: column; justify-content: center; padding: 40px 32px;
+    gap: 28px; border-left: 1px solid rgba(255,255,255,0.05);
+    transition: right 0.4s var(--ease);
+  }
+  /* Slide specific menu items smoothly visibly leftward */
+  .nav-links.open { right: 0; }
+  /* Decrease text dimensions rendering links optimally natively */
+  .nav-links a { font-size: 0.95rem; }
+  /* Activate internal visibility tracking mobile functional items solely */
+  .hamburger { display: flex; }
+  /* Keep overall wrapper geometry absolutely contained locally completely */
+  .hero-content { margin-right: 0; }
+  /* Force badge strings overlapping seamlessly backwards automatically safely */
+  .hero-label { flex-wrap: wrap; }
+  /* Scale headings mathematically calculating screen variables intrinsically */
+  .hero h1 { font-size: clamp(2.2rem, 8vw, 3rem); }
+  /* Push terminal shell sequences exclusively handling individual manual scrolling native gestures correctly natively */
+  .pipeline { padding: 16px 20px; font-size: 0.72rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Overwrite multiple column boundaries merging forms horizontally exclusively */
+  .form-row { grid-template-columns: 1fr; }
+  /* Reset general offsets safely */
+  .about-grid { gap: 40px; }
+  /* Un-link complex horizontal data points rendering directly beneath */
+  .footer-top { flex-direction: column; gap: 24px; }
+  /* Move final link objects seamlessly wrapping */
+  .footer-links { margin-left: 0; flex-wrap: wrap; justify-content: center; gap: 16px; }
+  /* Target specific textual lines uniformly center balanced perfectly explicitly */
+  .footer-bottom { flex-direction: column; text-align: center; gap: 6px; }
+  /* Reduce core structural boundaries globally precisely directly immediately */
+  .section-head { margin-bottom: 40px; }
+  /* Tone down massive number values gracefully linearly */
+  .stat-num { font-size: 2.5rem; }
+  /* Disable strictly bound background tracking rendering consistently avoiding scroll jank entirely */
+  .about, .model, .community, .contact { background-attachment: scroll; }
+}
+
+/* Activate additional fallbacks directly targeting smallest possible handheld devices uniformly securely */
+@media (max-width: 480px) {
+  /* Restructure hero action blocks distinctly targeting uniform placement */
+  .hero-actions { flex-direction: column; }
+  /* Fill core interaction targets widely across boundaries purely completely solely */
+  .hero-actions .btn { width: 100%; justify-content: center; }
+  /* Strip flex arrangements forcefully resetting pill boundaries horizontally natively safely cleanly */
+  .sectors { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
